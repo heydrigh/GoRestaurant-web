@@ -27,7 +27,10 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // TODO LOAD FOODS
+      api
+        .get('/foods')
+        .then(response => setFoods(response.data))
+        .catch(error => console.log(error));
     }
 
     loadFoods();
@@ -37,7 +40,11 @@ const Dashboard: React.FC = () => {
     food: Omit<IFoodPlate, 'id' | 'available'>,
   ): Promise<void> {
     try {
-      // TODO ADD A NEW FOOD PLATE TO THE API
+      const { name, price, image, description } = food;
+      if (!name || !price || !image || !description) return;
+
+      const response = await api.post('/foods', { ...food, available: true });
+      setFoods([...foods, response.data]);
     } catch (err) {
       console.log(err);
     }
@@ -46,11 +53,30 @@ const Dashboard: React.FC = () => {
   async function handleUpdateFood(
     food: Omit<IFoodPlate, 'id' | 'available'>,
   ): Promise<void> {
-    // TODO UPDATE A FOOD PLATE ON THE API
+    try {
+      const { name, price, image, description } = food;
+      if (!name || !price || !image || !description) return;
+
+      const { id, available } = editingFood;
+      const editedData = { ...food, id, available };
+      const { data } = await api.put(`/foods/${id}`, editedData);
+
+      const updatedList = foods.map(plate => (plate.id === id ? data : plate));
+      setFoods(updatedList);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async function handleDeleteFood(id: number): Promise<void> {
-    // TODO DELETE A FOOD PLATE FROM THE API
+    try {
+      await api.delete(`/foods/${id}`);
+
+      const filteredFoods = foods.filter(food => food.id !== id);
+      setFoods(filteredFoods);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   function toggleModal(): void {
@@ -62,7 +88,8 @@ const Dashboard: React.FC = () => {
   }
 
   function handleEditFood(food: IFoodPlate): void {
-    // TODO SET THE CURRENT EDITING FOOD ID IN THE STATE
+    setEditingFood(food);
+    toggleEditModal();
   }
 
   return (
